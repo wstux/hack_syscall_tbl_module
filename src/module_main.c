@@ -1,43 +1,17 @@
-#include <linux/version.h>
-
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(4, 16, 0)
-    #error "Usupported kernel version"
-#endif
-
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/syscalls.h>
+
+#include "syscall_utils.h"
 
 #define MODULE_NAME "hack_syscall_tbl"
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0)
-    #define KPROBE_LOOKUP 1
-    #include <linux/kprobes.h>
-
-    static struct kprobe kp = { .symbol_name = "kallsyms_lookup_name" };
-#endif
+static sys_call_table_t* _p_sys_call_table;
 
 unsigned long cr0;
 
-static unsigned long *p_sys_call_table;
-
 typedef asmlinkage long (*orig_execve_t)(const struct pt_regs*);
 orig_execve_t orig_execve;
-
-unsigned long* get_syscall_table(void)
-{
-    unsigned long *syscall_table;
-
-#ifdef KPROBE_LOOKUP
-    typedef unsigned long (*kallsyms_lookup_name_t)(const char* name);
-
-    kallsyms_lookup_name_t kallsyms_lookup_name;
-    register_kprobe(&kp);
-    kallsyms_lookup_name = (kallsyms_lookup_name_t)kp.addr;
-    unregister_kprobe(&kp);
-#endif
-    syscall_table = (unsigned long*)kallsyms_lookup_name("sys_call_table");
-    return syscall_table;
-}
 
 asmlinkage long hack_execve(const struct pt_regs* p_regs)
 {
@@ -76,17 +50,17 @@ static int __init init_hack_syscall_tbl_module(void)
 {
     printk(KERN_INFO "init_module\n");
 
-    p_sys_call_table = get_syscall_table();
-    if (!p_sys_call_table) {
+    _p_sys_call_table = get_syscall_table();
+    if (! _p_sys_call_table) {
         return -1;
     }
 
     cr0 = read_cr0();
-    orig_execve = (orig_execve_t)p_sys_call_table[__NR_execve];
+    orig_execve = (orig_execve_t)_p_sys_call_table[__NR_execve];
 
     UNPROTECT_MEMORY();
 
-    p_sys_call_table[__NR_execve] = (unsigned long)hack_execve;
+    _p_sys_call_table[__NR_execve] = (unsigned long)hack_execve;
 
     PROTECT_MEMORY();
 
@@ -99,7 +73,7 @@ static void __exit cleanup_hack_syscall_tbl_module(void)
 
     UNPROTECT_MEMORY();
 
-    p_sys_call_table[__NR_execve] = (unsigned long)orig_execve;
+    _p_sys_call_table[__NR_execve] = (unsigned long)orig_execve;
 
     PROTECT_MEMORY();
 }

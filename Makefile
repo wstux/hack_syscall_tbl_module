@@ -1,6 +1,6 @@
 # Common
 CC = gcc -Wall
-INC=-I/usr/src/linux-headers-$(shell uname -r)/include
+INC = -I/usr/src/linux-headers-$(shell uname -r)/include
 KERNEL_SRC := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 EXTRA_CFLAGS := -I$(PWD)/src
@@ -10,7 +10,7 @@ SOURCES_DIR := src
 
 # Get sources from ./src directory
 MODULE_NAME = hack_syscall_tbl_module
-SOURCES := $(SOURCES_DIR)/module_main.c
+SOURCES := $(SOURCES_DIR)/module_main.c $(SOURCES_DIR)/syscall_utils.c
 $(MODULE_NAME)-objs = $(SOURCES:.c=.o)
 
 obj-m := $(MODULE_NAME).o

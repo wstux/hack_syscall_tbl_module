@@ -10,8 +10,7 @@ static sys_call_table_t* _p_sys_call_table;
 
 unsigned long cr0;
 
-typedef asmlinkage long (*orig_execve_t)(const struct pt_regs*);
-orig_execve_t orig_execve;
+sys_call_fn_t orig_execve;
 
 asmlinkage long hack_execve(const struct pt_regs* p_regs)
 {
@@ -56,7 +55,7 @@ static int __init init_hack_syscall_tbl_module(void)
     }
 
     cr0 = read_cr0();
-    orig_execve = (orig_execve_t)_p_sys_call_table[__NR_execve];
+    orig_execve = (sys_call_fn_t)_p_sys_call_table[__NR_execve];
 
     UNPROTECT_MEMORY();
 
@@ -84,4 +83,5 @@ module_exit(cleanup_hack_syscall_tbl_module);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Chistyakov Alexander");
 MODULE_DESCRIPTION("Some description...");
+MODULE_VERSION("0.0.1");
 

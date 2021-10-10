@@ -1,3 +1,21 @@
+/*
+ * hack_syscall_tbl_module
+ * Copyright (C) 2021  Chistyakov Alexander
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <linux/syscalls.h>
 #include <linux/version.h>
 
@@ -17,7 +35,9 @@
     static struct kprobe kp_kallsyms_lookup = { .symbol_name = "kallsyms_lookup_name" };
 #endif
 
+/* System call table pointer. */
 static sys_call_table_t* _p_sys_call_table = NULL;
+/* Original system call table. */
 static sys_call_fn_t orig_syscall_table[NR_syscalls];
 
 static unsigned long cr0;
@@ -34,6 +54,9 @@ static inline void write_cr0_forced(unsigned long val)
 #define PROTECT_MEMORY() write_cr0_forced(cr0)
 #define UNPROTECT_MEMORY() write_cr0_forced(cr0 & ~0x00010000)
 
+/*
+ * @details To write.
+ */
 sys_call_table_t* get_syscall_table(void)
 {
 #ifdef USE_KPROBE
@@ -58,6 +81,9 @@ sys_call_table_t* get_syscall_table(void)
     return p_syscall_table;
 }
 
+/*
+ * @details To write.
+ */
 long init_syscall_table(void)
 {
     int i;
@@ -76,6 +102,9 @@ long init_syscall_table(void)
     return 0;
 }
 
+/*
+ * @details To write.
+ */
 sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num)
 {
     if (! _p_sys_call_table) {
@@ -97,6 +126,9 @@ sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num)
     return orig_syscall_table[syscall_num];
 }
 
+/*
+ * @details To write.
+ */
 long restore_orig_syscall(int syscall_num)
 {
     if (! orig_syscall_table[syscall_num]) {
@@ -112,6 +144,9 @@ long restore_orig_syscall(int syscall_num)
     return 0;
 }
 
+/*
+ * @details To write.
+ */
 sys_call_fn_t orig_syscall(int syscall_num)
 {
     if (! _p_sys_call_table) {

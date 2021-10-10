@@ -1,3 +1,21 @@
+/*
+ * hack_syscall_tbl_module
+ * Copyright (C) 2021  Chistyakov Alexander
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/syscalls.h>
@@ -29,6 +47,9 @@ asmlinkage long hack_execve(const struct pt_regs* p_regs)
     return exec_res;
 }
 
+/*
+ * @brief   Module initialization.
+ */
 static int __init init_hack_syscall_tbl_module(void)
 {
     printk(KERN_INFO "init_module\n");
@@ -40,17 +61,20 @@ static int __init init_hack_syscall_tbl_module(void)
 
     return 0;
 }
-   
+
+/*
+ * @brief   Module cleanup.
+ */
 static void __exit cleanup_hack_syscall_tbl_module(void)
 {
     printk(KERN_INFO "cleanup_module\n");
 
     restore_orig_syscall(__NR_execve);
 }
-   
+
 module_init(init_hack_syscall_tbl_module);
 module_exit(cleanup_hack_syscall_tbl_module);
-   
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Chistyakov Alexander");
 MODULE_DESCRIPTION("Some description...");

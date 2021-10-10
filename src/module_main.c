@@ -6,10 +6,6 @@
 
 #define MODULE_NAME "hack_syscall_tbl"
 
-static sys_call_table_t* _p_sys_call_table;
-
-unsigned long cr0;
-
 sys_call_fn_t orig_execve;
 
 asmlinkage long hack_execve(const struct pt_regs* p_regs)
@@ -33,35 +29,14 @@ asmlinkage long hack_execve(const struct pt_regs* p_regs)
     return exec_res;
 }
 
-static inline void write_cr0_forced(unsigned long val)
-{
-    unsigned long force_order;
-
-    asm volatile(
-        "mov %0, %%cr0"
-        : "+r"(val), "+m"(force_order));
-}
-
-#define PROTECT_MEMORY() write_cr0_forced(cr0)
-#define UNPROTECT_MEMORY() write_cr0_forced(cr0 & ~0x00010000)
-
 static int __init init_hack_syscall_tbl_module(void)
 {
     printk(KERN_INFO "init_module\n");
 
-    _p_sys_call_table = get_syscall_table();
-    if (! _p_sys_call_table) {
+    orig_execve = hook_syscall(hack_execve, __NR_execve);
+    if (! orig_execve) {
         return -1;
     }
-
-    cr0 = read_cr0();
-    orig_execve = (sys_call_fn_t)_p_sys_call_table[__NR_execve];
-
-    UNPROTECT_MEMORY();
-
-    _p_sys_call_table[__NR_execve] = (unsigned long)hack_execve;
-
-    PROTECT_MEMORY();
 
     return 0;
 }
@@ -70,11 +45,7 @@ static void __exit cleanup_hack_syscall_tbl_module(void)
 {
     printk(KERN_INFO "cleanup_module\n");
 
-    UNPROTECT_MEMORY();
-
-    _p_sys_call_table[__NR_execve] = (unsigned long)orig_execve;
-
-    PROTECT_MEMORY();
+    restore_orig_syscall(__NR_execve);
 }
    
 module_init(init_hack_syscall_tbl_module);

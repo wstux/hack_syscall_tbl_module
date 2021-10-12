@@ -29,7 +29,11 @@
     #define USE_KPROBE 1
 #endif
 
-#if USE_KPROBE
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)
+    #define USE_KALLSYMS_LOOKUP_FUNC 1
+#endif
+
+#ifdef USE_KALLSYMS_LOOKUP_FUNC && USE_KPROBE
     #include <linux/kprobes.h>
 
     static struct kprobe kp_kallsyms_lookup = { .symbol_name = "kallsyms_lookup_name" };
@@ -66,18 +70,29 @@ sys_call_table_t* get_syscall_table(void)
 #endif
 
     sys_call_table_t* p_syscall_table = NULL;
-
     if (_p_sys_call_table != NULL) {
         return _p_sys_call_table;
     }
 
-#ifdef USE_KPROBE
+#ifdef USE_KALLSYMS_LOOKUP_FUNC
+    #ifdef USE_KPROBE
     register_kprobe(&kp_kallsyms_lookup);
     kallsyms_lookup_name = (kallsyms_lookup_name_t)kp_kallsyms_lookup.addr;
     unregister_kprobe(&kp_kallsyms_lookup);
-#endif
+    #endif // USE_KPROBE
 
     p_syscall_table = (sys_call_table_t*)kallsyms_lookup_name("sys_call_table");
+#else // USE_KALLSYMS_LOOKUP_FUNC
+    unsigned long int i;
+
+    for (i = (sys_call_table_t)sys_close; i < ULONG_MAX; i += sizeof(void*)) {
+        if(((sys_call_table_t*)i)[__NR_close] == (sys_call_table_t)sys_close) {
+            p_syscall_table = (sys_call_table_t*)i;
+            break;
+        }
+    }
+#endif // USE_KALLSYMS_LOOKUP_FUNC
+
     return p_syscall_table;
 }
 
@@ -108,9 +123,7 @@ long init_syscall_table(void)
 sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num)
 {
     if (! _p_sys_call_table) {
-        if (init_syscall_table() != 0) {
-            return NULL;
-        }
+        return NULL;
     }
 
     if (! orig_syscall_table[syscall_num]) {

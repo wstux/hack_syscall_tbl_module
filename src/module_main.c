@@ -36,6 +36,7 @@ static int __init init_hack_syscall_tbl_module(void)
         printk(KERN_WARNING "syscall_table not found\n");
         return -1;
     }
+
     orig_execve = hook_syscall(hack_execve, __NR_execve);
     if (! orig_execve) {
         printk(KERN_ERR "failed hook sys_execve\n");

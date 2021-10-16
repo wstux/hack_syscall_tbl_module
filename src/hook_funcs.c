@@ -16,14 +16,12 @@ asmlinkage long hack_execve(const struct pt_regs* p_regs)
         printk(KERN_INFO "executable file is '%s'\n", kfilename);
     }
 
+    exec_res = orig_execve(p_regs);
     /*
      * #define current get_current()
-     * static inline struct task_struct * get_current(void) - возвращает контекст текущей задачи.
+     * static inline struct task_struct * get_current(void) - return context of current task.
      */
-    printk(KERN_INFO "execve '%s' process before orig_execve\n", current->comm);
-
-    exec_res = orig_execve(p_regs);
-    printk(KERN_INFO "orig_execve '%s' process\n", current->comm);
+    printk(KERN_INFO "execve '%s' process\n", current->comm);
     return exec_res;
 }
 

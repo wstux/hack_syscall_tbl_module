@@ -33,10 +33,8 @@
     #define USE_KALLSYMS_LOOKUP_FUNC 1
 #endif
 
-#ifdef USE_KALLSYMS_LOOKUP_FUNC && USE_KPROBE
+#if defined(USE_KALLSYMS_LOOKUP_FUNC) && defined(USE_KPROBE)
     #include <linux/kprobes.h>
-
-    static struct kprobe kp_kallsyms_lookup = { .symbol_name = "kallsyms_lookup_name" };
 #endif
 
 /* System call table pointer. */
@@ -67,6 +65,7 @@ sys_call_table_t* get_syscall_table(void)
     typedef unsigned long (*kallsyms_lookup_name_t)(const char* name);
 
     kallsyms_lookup_name_t kallsyms_lookup_name;
+    struct kprobe kp_kallsyms_lookup = { .symbol_name = "kallsyms_lookup_name" };
 #endif
 
     sys_call_table_t* p_syscall_table = NULL;

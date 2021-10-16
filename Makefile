@@ -10,7 +10,8 @@ SOURCES_DIR := src
 
 # Get sources from ./src directory
 MODULE_NAME = hack_syscall_tbl_module
-SOURCES := $(SOURCES_DIR)/module_main.c \
+SOURCES := $(SOURCES_DIR)/hook_funcs.c \
+           $(SOURCES_DIR)/module_main.c \
            $(SOURCES_DIR)/syscall_utils.c
 $(MODULE_NAME)-objs = $(SOURCES:.c=.o)
 

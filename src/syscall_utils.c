@@ -19,11 +19,11 @@
 #include <linux/syscalls.h>
 #include <linux/version.h>
 
+#include "syscall_utils.h"
+
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(4, 16, 0)
     #error "Usupported kernel version"
 #endif
-
-#include "syscall_utils.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0)
     #define USE_KPROBE 1
@@ -37,12 +37,12 @@
     #include <linux/kprobes.h>
 #endif
 
+#define PAGE_RW 0x00010000
+
 /* System call table pointer. */
 static sys_call_table_t* _p_sys_call_table = NULL;
 /* Original system call table. */
 static sys_call_fn_t orig_syscall_table[NR_syscalls];
-
-static unsigned long cr0;
 
 static inline void write_cr0_forced(unsigned long val)
 {
@@ -53,8 +53,10 @@ static inline void write_cr0_forced(unsigned long val)
         : "+r"(val), "+m"(force_order));
 }
 
-#define PROTECT_MEMORY() write_cr0_forced(cr0)
-#define UNPROTECT_MEMORY() write_cr0_forced(cr0 & ~0x00010000)
+#define PROTECT_MEMORY() \
+    write_cr0_forced((read_cr0() & ~PAGE_RW) ? read_cr0() | PAGE_RW : read_cr0())
+#define UNPROTECT_MEMORY() \
+    write_cr0_forced(read_cr0() & ~PAGE_RW)
 
 /*
  * @details To write.
@@ -106,8 +108,6 @@ long init_syscall_table(void)
     if (! _p_sys_call_table) {
         return -1;
     }
-
-    cr0 = read_cr0();
 
     for (i = 0; i < NR_syscalls; ++i) {
         orig_syscall_table[i] = NULL;
@@ -171,4 +171,14 @@ sys_call_fn_t orig_syscall(int syscall_num)
 
     return (sys_call_fn_t)_p_sys_call_table[syscall_num];
 }
+
+#undef PAGE_RW
+#undef PROTECT_MEMORY
+#undef UNPROTECT_MEMORY
+#if defined(USE_KALLSYMS_LOOKUP_FUNC)
+    #undef USE_KALLSYMS_LOOKUP_FUNC
+#endif
+#if defined(USE_KPROBE)
+    #undef USE_KPROBE
+#endif
 

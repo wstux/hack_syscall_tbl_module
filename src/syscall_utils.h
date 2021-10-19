@@ -53,5 +53,11 @@ sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num);
  */
 long restore_orig_syscall(int syscall_num);
 
+/*
+ * @brief   Restore all the original system calls.
+ * @return  On success, 0 is returned. On failure, -1 is returned.
+ */
+long restore_orig_syscalls(void);
+
 #endif // SYSCALL_UTILS_H
 

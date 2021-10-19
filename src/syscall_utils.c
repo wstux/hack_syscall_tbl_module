@@ -124,6 +124,9 @@ sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num)
     if (! _p_sys_call_table) {
         return NULL;
     }
+    if (syscall_num >= NR_syscalls) {
+        return NULL;
+    }
 
     if (! orig_syscall_table[syscall_num]) {
         orig_syscall_table[syscall_num] = (sys_call_fn_t)_p_sys_call_table[syscall_num];
@@ -141,8 +144,33 @@ sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num)
 /*
  * @details To write.
  */
+sys_call_fn_t orig_syscall(int syscall_num)
+{
+    if (! _p_sys_call_table) {
+        return NULL;
+    }
+    if (syscall_num >= NR_syscalls) {
+        return NULL;
+    }
+
+    if (orig_syscall_table[syscall_num]) {
+        return orig_syscall_table[syscall_num];
+    }
+
+    return (sys_call_fn_t)_p_sys_call_table[syscall_num];
+}
+
+/*
+ * @details To write.
+ */
 long restore_orig_syscall(int syscall_num)
 {
+    if (! _p_sys_call_table) {
+        return -1;
+    }
+    if (syscall_num >= NR_syscalls) {
+        return -1;
+    }
     if (! orig_syscall_table[syscall_num]) {
         return 0;
     }
@@ -159,17 +187,23 @@ long restore_orig_syscall(int syscall_num)
 /*
  * @details To write.
  */
-sys_call_fn_t orig_syscall(int syscall_num)
+long restore_orig_syscalls(void)
 {
+    int i;
+
     if (! _p_sys_call_table) {
-        return NULL;
+        return -1;
     }
 
-    if (orig_syscall_table[syscall_num]) {
-        return orig_syscall_table[syscall_num];
+    UNPROTECT_MEMORY();
+
+    for (i = 0; i < NR_syscalls; ++i) {
+        _p_sys_call_table[i] = (unsigned long)orig_syscall_table[i];
     }
 
-    return (sys_call_fn_t)_p_sys_call_table[syscall_num];
+    PROTECT_MEMORY();
+
+    return 0;
 }
 
 #undef PAGE_RW

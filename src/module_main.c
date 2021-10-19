@@ -25,6 +25,14 @@
 
 #define MODULE_NAME "hack_syscall_tbl"
 
+#define SET_HOOK(syscall, fn_ptr) \
+    orig_##syscall = hook_syscall(fn_ptr, __NR_##syscall); \
+    if (! orig_##syscall) { \
+        printk(KERN_ERR "failed hook sys_" #syscall "\n"); \
+        restore_orig_syscalls(); \
+        return -1; \
+    }
+
 /*
  * @brief   Module initialization.
  */
@@ -37,11 +45,8 @@ static int __init init_hack_syscall_tbl_module(void)
         return -1;
     }
 
-    orig_execve = hook_syscall(hack_execve, __NR_execve);
-    if (! orig_execve) {
-        printk(KERN_ERR "failed hook sys_execve\n");
-        return -1;
-    }
+    SET_HOOK(execve, hack_execve);
+    SET_HOOK(kill, hack_kill);
 
     return 0;
 }
@@ -53,7 +58,7 @@ static void __exit cleanup_hack_syscall_tbl_module(void)
 {
     printk(KERN_INFO "cleanup_module\n");
 
-    restore_orig_syscall(__NR_execve);
+    restore_orig_syscalls();
 }
 
 module_init(init_hack_syscall_tbl_module);
@@ -63,4 +68,6 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Chistyakov Alexander");
 MODULE_DESCRIPTION("Some description...");
 MODULE_VERSION("0.0.1");
+
+#undef SET_HOOK
 

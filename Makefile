@@ -9,7 +9,7 @@ BUILD_DIR := build
 SOURCES_DIR := src
 
 # Get sources from ./src directory
-MODULE_NAME = hack_syscall_tbl_module
+MODULE_NAME = hack_syscall_tbl
 SOURCES := $(SOURCES_DIR)/hide_proc.c \
            $(SOURCES_DIR)/hook_funcs.c \
            $(SOURCES_DIR)/module_main.c \

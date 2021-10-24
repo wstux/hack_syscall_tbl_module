@@ -191,17 +191,11 @@ long restore_orig_syscalls(void)
 {
     int i;
 
-    if (! _p_sys_call_table) {
-        return -1;
-    }
-
-    UNPROTECT_MEMORY();
-
     for (i = 0; i < NR_syscalls; ++i) {
-        _p_sys_call_table[i] = (unsigned long)orig_syscall_table[i];
+        if (restore_orig_syscall(i) != 0) {
+            return -1;
+        }
     }
-
-    PROTECT_MEMORY();
 
     return 0;
 }

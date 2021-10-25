@@ -54,5 +54,5 @@ https://github.com/zizzu0/LinuxKernelModules/
 Linux Rootkits: New Methods for Kernel 5.7+
 https://xcellerator.github.io/posts/linux_rootkits_11/
 
-m0nad Diamorphine
-https://github.com/m0nad/Diamorphine
+m0nad
+https://github.com/m0nad/
